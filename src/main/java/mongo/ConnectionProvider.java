@@ -9,14 +9,15 @@ import com.mongodb.MongoClientURI;
 import com.mongodb.MongoException;
 
 public class ConnectionProvider {
-
+	
+	MongoClient client=null;
+	
 	public DBCollection getCollection(String collectionName) throws UnknownHostException {
 		// TODO Auto-generated method stub
-		
 		try {
 			
 			MongoClientURI uri = new MongoClientURI("mongodb://archit:gajjar@ds035563.mlab.com:035563/saasunh");
-			MongoClient client = new MongoClient(uri); // MongoClient connected with the specified URI.
+			client = new MongoClient(uri); // MongoClient connected with the specified URI.
 
 			@SuppressWarnings("deprecation")
 			DB db = client.getDB(uri.getDatabase()); // Database Object created.
@@ -33,6 +34,10 @@ public class ConnectionProvider {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	public void connectionClose(){
+		client.close();
 	}
 
 }
