@@ -13,7 +13,9 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import command.ListAllUserCommand;
+import command.ListAllUserWish;
 import model.User;
+import model.WishList;
 
 @Path("users")
 public class Sandbox {
@@ -25,6 +27,22 @@ public class Sandbox {
 			
 		ListAllUserCommand listBooks = new ListAllUserCommand();
 			ArrayList<User> list = listBooks.execute();
+			String booksString = null;
+			try {
+				booksString = mapper.writeValueAsString(list);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return Response.status(200).entity(booksString).build();
+		}
+
+	@GET
+	@Path("wish")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getWish() throws Exception{
+			
+		ListAllUserWish wish = new ListAllUserWish();
+			ArrayList<WishList> list = wish.execute();
 			String booksString = null;
 			try {
 				booksString = mapper.writeValueAsString(list);
