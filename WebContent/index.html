@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<script src="http://code.jquery.com/jquery-latest.min.js">
+</script>
+
+</head>
+<body>
+hello Archit
+userId : < input type="text" id="userId"/>
+imdbID : < input type="text" id="imdb">
+</body>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	$.ajax({
+            url: "http://saasunh.herokuapp.com/rest/user",
+            type: "GET",
+            dataType: 'json',          
+            success: function (response) {
+				console.log(response);
+				//alert(response);
+				for (var i=0; i < response.length; i++ ) {
+					alert(response[i].firstName);
+				}
+            },
+            error: function (xhr, status) {
+                alert("error");
+            }
+        });
+
+});
+</script>
+
+</html>
