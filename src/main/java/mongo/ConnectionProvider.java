@@ -16,7 +16,7 @@ public class ConnectionProvider {
 		// TODO Auto-generated method stub
 		try {
 			
-			MongoClientURI uri = new MongoClientURI("mongodb://archit:gajjar@ds035563.mlab.com:035563/saasunh");
+			MongoClientURI uri = new MongoClientURI("mongodb://<db:name>:<db:password>@ds<db:port>.mlab.com:<db:port>/<db:name>");
 			client = new MongoClient(uri); // MongoClient connected with the specified URI.
 
 			@SuppressWarnings("deprecation")
