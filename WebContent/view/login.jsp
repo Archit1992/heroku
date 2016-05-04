@@ -43,10 +43,10 @@
 					<div class="modal-body">
 
 
-						<form role="form" method="GET" name="myform" action="<%=request.getContextPath()%>/rest/user/login">
+						<form role="form" method="POST" name="myform" action="<%=request.getContextPath()%>/rest/user/logIn">
 
 							<div class="form-group">
-								<input type="text" class="form-control" name="login" placeholder="login" required="">
+								<input type="text" class="form-control" name="firstName" placeholder="login" required="">
 							</div>
 							<div class="form-group">
 								<input type="password" class="form-control" name="password" placeholder="password" required="">
