@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
+import javax.ws.rs.PathParam;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -20,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import command.CreateUserCommand;
 import command.ListAllUserCommand;
 import command.ListAllUserWish;
+import command.LoginUserCommand;
 import command.UpdateUserCommand;
 import command.UserInfoCommand;
 import model.User;
@@ -33,19 +36,29 @@ public class Sandbox {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getResponse() throws Exception {
 
-		ListAllUserCommand listBooks = new ListAllUserCommand();
-		ArrayList<User> list = listBooks.execute();
-		String booksString = null;
+		ListAllUserCommand listUsers = new ListAllUserCommand();
+		ArrayList<User> list = listUsers.execute();
+		String userString = null;
 		try {
-			booksString = mapper.writeValueAsString(list);
+			userString = mapper.writeValueAsString(list);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return Response.status(200).entity(booksString).header("Access-Control-Allow-Origin", "*")
-				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		if(userString != null){
+			// if users found...
+			return Response.status(200).entity(userString).header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		}else{
+			// if users will not be found...
+			return Response.ok(new Viewable("/view/Error404.jsp", "Not a single user exist!..."))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		
+		}
 	}
+
+	// getting data of all wishes...
 	
-	// getting data of all wishes... 
 	@GET
 	@Path("wish")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -53,68 +66,122 @@ public class Sandbox {
 
 		ListAllUserWish wish = new ListAllUserWish();
 		ArrayList<WishList> list = wish.execute();
-		String booksString = null;
+		String wishString = null;
 		try {
-			booksString = mapper.writeValueAsString(list);
+			wishString = mapper.writeValueAsString(list);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return Response.status(200).entity(booksString).header("Access-Control-Allow-Origin", "*")
-				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		// return all user's wish data
+		if(wishString != null){
+			// if wishes will be there...
+			return Response.status(200).entity(wishString).header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		}else{
+			// if wishes will not be there...
+			return Response.ok(new Viewable("/view/Error404.jsp", "Not a single wish exist!..."))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		
+		}
+		
 	}
-	
-	
-	
-	// getting a data for specific user... 
+
+	// getting a data for specific user...
+	// link : http://saasunh.herokuapp.com/rest/user/{key}/{value}
 	@GET
 	@Path("/{key}/{value}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getUserInfo(@QueryParam("key") String key, @QueryParam("value") String value) throws Exception {
+	@Produces(MediaType.APPLICATION_JSON)	// produces JSON data as response.
+	public Response getUserInfo(@PathParam("key") String key, @PathParam("value") String value) throws Exception {
 
 		UserInfoCommand userInfo = new UserInfoCommand();
-		User user = userInfo.execute(key, value);
+		User user = userInfo.execute(key, value);	
 		String userData = null;
 
 		try {
-			userData = mapper.writeValueAsString(user);
+			userData = mapper.writeValueAsString(user); // mapped user object data as a String to userData
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return Response.status(200).entity(userData).header("Access-Control-Allow-Origin", "*")
-				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		if(userData !=null){
+			// if user found!
+			return Response.status(200).entity(userData).header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		}else{
+			// if user not found!
+			return Response.ok(new Viewable("/view/Error404.jsp", "User is not exist..."))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		}
+		
 	}
 
-	
-	// Registration purposes... 
+	// Registration purposes...
+	// link : http://saasunh.herokuapp.com/rest/user/create/{FormParam}
 	@POST
 	@Path("/create")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response post(@FormParam("firstName") String login, @FormParam("lastName") String lastname,
 			@FormParam("email") String email, @FormParam("password") String password) {
-		User s = new User();
+		
+		User s = new User();   // setting user details into model.
 		s.setFirstName(login);
 		s.setLastName(lastname);
 		s.setEmail(email);
 		s.setPassword(password);
 		
+		// set user details into model object.
 		CreateUserCommand cmd = new CreateUserCommand();
-		if(cmd.execute(s)){
-			return Response.ok(new Viewable("/view/success.jsp")).header("Access-Control-Allow-Origin", "*")
+		if (cmd.execute(s)) {
+			//// if user will be created...
+			return Response.ok(new Viewable("/view/userCreated.jsp", " User successfully created!"))
+					.header("Access-Control-Allow-Origin", "*")
 					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
-		}else{
-			return Response.ok(new Viewable("/view/Error.jsp", "Please Register again...")).header("Access-Control-Allow-Origin", "*")
+		} else {
+			return Response.ok(new Viewable("/view/Error404.jsp", "Please Register again..."))
+					.header("Access-Control-Allow-Origin", "*")
 					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
 		}
-		
+
 	}
-	
-	
-	// Update User Account data... 
+
+	// During Login time, this web-service will be called...
+	// link : http://saasunh.herokuapp.com/rest/user/log/{FormParam}
+	@POST
+	@Path("/log")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	public Response post(@FormParam("firstName") String login, @FormParam("password") String password) {
+
+		User s = new User();
+		s.setFirstName(login);
+		s.setPassword(password);
+		// set user details into model object.
+		
+		LoginUserCommand user = new LoginUserCommand();
+		String userId = user.execute(s); // this method will give you specific user Id, it it exist!
+
+		if (userId != null) {
+			// if userId will get...
+			return Response.ok(new Viewable("/view/success.jsp", userId)).header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		} else {
+			// if userId will not get...
+			return Response.ok(new Viewable("/view/Error.jsp", "Please Register first..."))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		}
+
+	}
+
+	// Update User Account data...
+	// link : http://saasunh.herokuapp.com/rest/user/id/{QueryParam}
 	@PUT
 	@Path("/id")
+	@Produces(MediaType.APPLICATION_JSON) // will produce JSON data as response.
 	public Response deleteBook(@QueryParam("firstName") String login, @QueryParam("lastName") String lastname,
-			@QueryParam("email") String email, @QueryParam("password") String password, @QueryParam("session") String id) {
-		
+			@QueryParam("email") String email, @QueryParam("password") String password,
+			@QueryParam("session") String id) {
+
 		UpdateUserCommand update = new UpdateUserCommand();
 
 		User s = new User();
@@ -122,27 +189,32 @@ public class Sandbox {
 		s.setLastName(lastname);
 		s.setEmail(email);
 		s.setPassword(password);
-		
-		if(update.execute(id,s)){
-			return Response.status(200).build();
-		}else{
-			return Response.status(400).build();
+		// set user details into model object.
+		if (update.execute(id, s)) {
+
+			// if data will be changed...
+			return Response.ok(new Viewable("/view/success.jsp")).header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		} else {
+			// if data will not be changed/ Error.jsp will be displayed...
+			return Response.ok(new Viewable("/view/Error404.jsp", "Please go back and try again..."))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
 		}
-		
+
 	}
-	
+
+	// During login time...
+	// link : http://saasunh.herokuapp.com/rest/user/login
 	@GET
 	@Path("/login")
-	public Response doLogin(){
-		
+	public Response doLogin() {
+
 		return Response.ok(new Viewable("/view/Register.jsp")).header("Access-Control-Allow-Origin", "*")
-	.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
 	}
-	
-	
-	
-	
-	// ============================== EXTRA Services, Working on it =========================== 
+
+	// ============================== EXTRA Services, Working on it ===========================
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes({ MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN })
