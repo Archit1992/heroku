@@ -1,8 +1,13 @@
 package test;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.PathParam;
 
@@ -20,6 +25,7 @@ import org.glassfish.jersey.server.mvc.Viewable;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import command.CreateUserCommand;
+import command.CreateWishCommand;
 import command.ListAllUserCommand;
 import command.ListAllUserWish;
 import command.LoginUserCommand;
@@ -130,7 +136,6 @@ public class Sandbox {
 		s.setEmail(email);
 		s.setPassword(password);
 		
-		// set user details into model object.
 		CreateUserCommand cmd = new CreateUserCommand();
 		if (cmd.execute(s)) {
 			//// if user will be created...
@@ -155,8 +160,7 @@ public class Sandbox {
 		User s = new User();
 		s.setFirstName(login);
 		s.setPassword(password);
-		// set user details into model object.
-		
+
 		LoginUserCommand user = new LoginUserCommand();
 		String userId = user.execute(s); // this method will give you specific user Id, it it exist!
 
@@ -189,7 +193,7 @@ public class Sandbox {
 		s.setLastName(lastname);
 		s.setEmail(email);
 		s.setPassword(password);
-		// set user details into model object.
+
 		if (update.execute(id, s)) {
 
 			// if data will be changed...
@@ -213,8 +217,63 @@ public class Sandbox {
 		return Response.ok(new Viewable("/view/Register.jsp")).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
 	}
+	
+	/*@DELETE
+	@Path("/{id}")
+	public Response doDelete() {
+		
+		
+		return Response.ok(new Viewable("/view/Register.jsp")).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+	}*/
+	
+	
+	@SuppressWarnings("deprecation")
+	@GET
+	@Path("add")
+	public Response addWish(@QueryParam("id") String imdbId, @QueryParam("releasedDate") String releaseDate,
+			@QueryParam("userId") String objId, @QueryParam("name") String name,@QueryParam("poster") String poster) {
 
-	// ============================== EXTRA Services, Working on it ===========================
+		System.out.println("IMDB ID  is : " + imdbId);
+		System.out.println("IMDB Date is : " + releaseDate);
+
+		// Error: MM/dd/yyyy
+		SimpleDateFormat x = new SimpleDateFormat("dd MMMMM yyyy", Locale.ENGLISH);
+		Date d1 = null;
+		try {
+			d1 = x.parse(releaseDate);
+		} catch (ParseException e) {
+			Response.status(400).entity("Invalid date format.").build();
+		}
+		System.out.println("Day :" + d1.getDay() + " Month: " + d1.getMonth() + " Year: " + d1.getYear());
+
+		WishList wish = new WishList();
+
+		wish.setDate(d1.getDay(), d1.getMonth(), d1.getYear());
+		wish.setImdbId(imdbId);
+		wish.setUserId(objId);
+		wish.setName(name);
+		wish.setPoster(poster);
+		
+		CreateWishCommand userWish = new CreateWishCommand();
+		String imdb_Id = userWish.execute(wish);
+		System.out.println("User wish IMDB id ="+imdb_Id);
+		
+		if (imdb_Id == null) {
+			return Response.ok(new Viewable("/view/Error404.jsp", " Bad request")).header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+
+		} else {
+			return Response.ok(new Viewable("/view/AddWish.jsp", imdb_Id)).header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		}
+
+	}
+	
+	
+
+	// ============================== EXTRA Services, Working on it
+	// ===========================
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes({ MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN })
@@ -238,5 +297,15 @@ public class Sandbox {
 			return Response.status(400).entity(e.toString()).header("Access-Control-Allow-Origin", "*")
 					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
 		}
+	}
+	
+	@GET
+	@Path("wishlist")
+	public Response getImdbSearch(){
+		
+		return Response.ok(new Viewable("/view/ImdbSearch.jsp")).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		
+		
 	}
 }
