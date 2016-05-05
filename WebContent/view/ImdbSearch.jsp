@@ -1,8 +1,13 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@page import="command.FindUserCommand"%>
+<%@page import="command.LoginUserCommand"%>
+<%@page import="com.mongodb.BasicDBObject" %>
+<%@page import="command.FindUserCommand" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <title>IMDB Wish List</title>
-<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet"
 	href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
@@ -16,10 +21,11 @@
 <script type="text/javascript">
 	var x;
 	$(document).ready(function() {
-	
+		
+		var sessionData=$('#session').val();
+		
 		$('#sub').click(function() {
 			var requestData = $('#search').val();
-			var sessionData=$('#sessionDetail').val();
 			var resultElement = $('#response');
 			
 			$.ajax({
@@ -45,11 +51,38 @@
 			})
 		})
 		
-		$('#addWish').click(function add(){
-			alert(x);
-			window.location.href="http://localhost:8080/saasunh/rest/user/add?"+x;
+		$('#wishSearch').click(function(status, jqxhr) {
+		
+			$.ajax({
+	            url: "http://saasunh.herokuapp.com/rest/user/wish/"+sessionData,
+	            type: "GET",
+	            dataType: 'json',          
+	            success: function (response) {
+					console.log(response);
+					//alert(response);
+					for (var i=0; i < response.length; i++ ) {
+						$('#poster2').attr('src', response[i].poster);
+						$('#Title2').html(response[i].name);
+						$('#imdbId2').html(response[i].imdbId);
+						$('#day2').html(response[i].day);
+						$('#month2').html(response[i].month);
+						$('#year2').html(response[i].year);
+						
+						$('#table2').fadeIn(2000);
+					}
+	            },
+	            error: function (xhr, status) {
+	                alert("error");
+	            }
+	        });
+
 		});
+		
+		$('#addWish').click(function add(){
 			
+			window.location.href="http://localhost:8080/csci6678/rest/user/wish/add?"+x;
+			window.location.reload(true);
+		});
 	})
 </script>
 </head>
@@ -59,7 +92,40 @@
 
 		<!--  ================ Navigationbar HTML5 Content ================================== -->
 		
-		<jsp:include page="header.jsp"></jsp:include>
+		
+
+		<nav class="navbar navbar-inverse">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="" id="">Wish List</a>
+				</div>
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="#">Home</a></li>
+					
+					
+					<% 
+						String id=(String)session.getAttribute("session");
+					%>
+										
+					<li><a href="<%=request.getContextPath()%>/view/accountDetails.jsp" >Account</a></li>
+					
+					 <% 
+						
+						FindUserCommand command=new FindUserCommand();
+						String fName=command.execute(id);
+					 %>
+					 <li style="padding-left: 660px;"><a href="#">
+						<%=fName %> 
+					</a>
+					</li>
+					<li style="padding-left: 10px;"><a href="<%=request.getContextPath()%>/view/Logout.jsp">Logout</a></li>
+				</ul>
+				
+				<div style="display: none;">
+						<input type="text" id="userName" value="<%=fName%>"></input>
+				</div>
+			</div>
+		</nav>
 		
 		
 		<!--  ================ /Navigationbar HTML5 Content ================================== -->
@@ -86,16 +152,16 @@
 			<!-- Wrapper for slides -->
 			<div class="carousel-inner" role="listbox">
 				<div class="item active">
-					<img class="img-responsive" src="img/imdbThird.png" alt="Imdb">
+					<img class="img-responsive" src="<%=request.getContextPath()%>/view/img/imdbThird.png" alt="Imdb">
 				</div>
 				<div class="item">
-					<img class="img-responsive" src="img/imdbFirst.png" alt="Imdb">
+					<img class="img-responsive" src="<%=request.getContextPath()%>/view/img/imdbFirst.png" alt="Imdb">
 				</div>
 				<div class="item">
-					<img class="img-responsive" src="img/imdbSecond.png" alt="Imdb">
+					<img class="img-responsive" src="<%=request.getContextPath()%>/view/img/imdbSecond.png" alt="Imdb">
 				</div>
 				<div class="item">
-					<img class="img-responsive" src="img/imdbForth.png" alt="Imdb">
+					<img class="img-responsive" src="<%=request.getContextPath()%>/view/img/imdbForth.png" alt="Imdb">
 				</div>
 			</div>
 
@@ -124,7 +190,7 @@
 						<h4 class="panel-title">
 							<div class="form-group">
 
-								<img class="img-responsive" src="img/IMDb-icon-300x167.png"
+								<img class="img-responsive" src="<%=request.getContextPath()%>/view/img/IMDb-icon-300x167.png"
 									style="height: 35px; width: 60px;">
 
 							</div>
@@ -144,13 +210,15 @@
 							
 							<!-- ----------------Getting data from Session -------------------------------  -->
 							
-							<input type="text" style="display: none" id="sessionDetail" value="<%=(String)session.getAttribute("sessionlog") %>" >
+							<input type="text" style="display: none" id="session" value="<%=(String)session.getAttribute("session") %>" >
 							
 							
 							<div class="form-group">
 								<input type="search" class="form-control" id="search">
 							</div>
 							<button type="submit" class="btn btn-default" id="sub">Submit</button>
+							<button type="submit" class="btn btn-default" id="wishSearch">Your WishList</button>
+							
 						</h4>
 					</form>
 
@@ -181,14 +249,14 @@
 					</tr>
 				</thead>
 				<tr>
-					<td><img src=" " id="Poster" style="border-style:solid; text-align: center;" width="300px" height="70px" /></td>
+					<td><img src="" id="Poster" style="border-style:solid; text-align: center;" width="300px" height="70px" /></td>
 					<td id="Title" style="border-style:solid; text-align: center;" width="200px"></td>
 					<td id="Type" style="border-style:solid; text-align: center;" width="200px"></td>
 					<td id="imdbRating" style="border-style:solid; text-align: center" width="200px"></td>
 					<td id="imdbId" style="border-style:solid; text-align: center" width="200px"></td>
 					<td id="Released" style="border-style:solid; text-align: center" width="200px"></td>
 					<td id="Add" style="border-style:solid; text-align: center" width="200px">
-						<input type="button" value="Add" class="btn btn-success" id="addWish" onclick="add()">
+						<input type="button" value="Add" class="btn btn-success" id="addWish">
 					</td>
 				</tr>
 
@@ -197,11 +265,44 @@
 
 
 		</div>
-		<div>
-		</div>
-
+		
 		<!--  ================ /FORM HTML5 Content ================================== -->
-		<br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
+		<br /> 
+		<div>
+
+			<table  cellpadding="10px" style="display:none; border-style:solid;" id="table2">
+				<thead>
+					<tr>
+						<th style="border-style:solid; text-align: center">Poster</th>
+						<th style="border-style:solid; text-align: center">Title</th>
+						<th style="border-style:solid; text-align: center">IMDB ID</th>
+						<th style="border-style:solid; text-align: center">Released Day</th>
+						<th style="border-style:solid; text-align: center">Released Month</th>
+						<th style="border-style:solid; text-align: center">Released Year</th>
+						
+						<th style="border-style:solid; text-align: center">Action</th>
+					</tr>
+				</thead>
+				<tr>
+					<td><img src="" id="poster2" style="border-style:solid; text-align: center;" width="300px" height="70px" /></td>
+					<td id="Title2" style="border-style:solid; text-align: center;" width="200px"></td>
+					<td id="imdbId2" style="border-style:solid; text-align: center" width="200px"></td>
+					<td id="day2" style="border-style:solid; text-align: center" width="200px"></td>
+					<td id="month2" style="border-style:solid; text-align: center" width="200px"></td>
+					<td id="year2" style="border-style:solid; text-align: center" width="200px"></td>
+					
+					<td id="del" style="border-style:solid; text-align: center" width="200px">
+						<input type="button" value="Delete" class="btn btn-danger" id="delWish">
+					</td>
+				</tr>
+
+
+			</table>
+
+
+		</div>
+			
+		<br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
 
 
 		<!--  ================ PAGER HTML5 Content ================================== -->
