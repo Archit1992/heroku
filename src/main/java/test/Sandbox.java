@@ -1,10 +1,6 @@
 package test;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -25,12 +21,12 @@ import org.glassfish.jersey.server.mvc.Viewable;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import command.CreateUserCommand;
-import command.CreateWishCommand;
 import command.ListAllUserCommand;
 import command.ListAllUserWish;
 import command.LoginUserCommand;
 import command.UpdateUserCommand;
 import command.UserInfoCommand;
+import command.WishInfoCommand;
 import model.User;
 import model.WishList;
 
@@ -181,7 +177,7 @@ public class Sandbox {
 	// link : http://saasunh.herokuapp.com/rest/user/id/{QueryParam}
 	@PUT
 	@Path("/id")
-	@Produces(MediaType.APPLICATION_JSON) // will produce JSON data as response.
+	@Produces(MediaType.APPLICATION_JSON ) // will produce JSON data as response.
 	public Response deleteBook(@QueryParam("firstName") String login, @QueryParam("lastName") String lastname,
 			@QueryParam("email") String email, @QueryParam("password") String password,
 			@QueryParam("session") String id) {
@@ -195,19 +191,53 @@ public class Sandbox {
 		s.setPassword(password);
 
 		if (update.execute(id, s)) {
-
+			System.out.println("Success !");	
 			// if data will be changed...
-			return Response.ok(new Viewable("/view/success.jsp")).header("Access-Control-Allow-Origin", "*")
+			return Response.status(200).entity("success!").header("Access-Control-Allow-Origin", "*")
 					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
 		} else {
 			// if data will not be changed/ Error.jsp will be displayed...
+			System.out.println("Fail !");
 			return Response.ok(new Viewable("/view/Error404.jsp", "Please go back and try again..."))
 					.header("Access-Control-Allow-Origin", "*")
 					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
 		}
 
 	}
-
+	
+	@GET
+	@Path("/wish/{value}")
+	@Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")	// produces JSON data as response.
+	public Response getUserWishInfo(@PathParam("value") String value) throws Exception {
+		
+		System.out.println("This is specific user wish list method...");
+		System.out.println("PATH para value : "+value);
+		
+		WishInfoCommand userInfo = new WishInfoCommand();
+		ArrayList<WishList> wish = userInfo.execute(value);	
+		
+		String userData = null;
+		System.out.println("TRY block entering===========================");
+		try {
+			userData = mapper.writeValueAsString(wish); // mapped user object data as a String to userData
+			System.out.println("specific user data is : "+userData);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if(userData != null){
+			// if user found!
+			return Response.status(200).entity(userData).header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		}else{
+			// if user not found!
+			System.out.println("User Data not exist!");
+			return Response.ok(new Viewable("/view/Error404.jsp", "User is not exist..."))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
+		}
+		
+	}
+	
 	// During login time...
 	// link : http://saasunh.herokuapp.com/rest/user/login
 	@GET
@@ -218,59 +248,15 @@ public class Sandbox {
 				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
 	}
 	
-	/*@DELETE
+	@DELETE
 	@Path("/{id}")
 	public Response doDelete() {
 		
 		
 		return Response.ok(new Viewable("/view/Register.jsp")).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
-	}*/
-	
-	
-	@SuppressWarnings("deprecation")
-	@GET
-	@Path("add")
-	public Response addWish(@QueryParam("id") String imdbId, @QueryParam("releasedDate") String releaseDate,
-			@QueryParam("userId") String objId, @QueryParam("name") String name,@QueryParam("poster") String poster) {
-
-		System.out.println("IMDB ID  is : " + imdbId);
-		System.out.println("IMDB Date is : " + releaseDate);
-
-		// Error: MM/dd/yyyy
-		SimpleDateFormat x = new SimpleDateFormat("dd MMMMM yyyy", Locale.ENGLISH);
-		Date d1 = null;
-		try {
-			d1 = x.parse(releaseDate);
-		} catch (ParseException e) {
-			Response.status(400).entity("Invalid date format.").build();
-		}
-		System.out.println("Day :" + d1.getDay() + " Month: " + d1.getMonth() + " Year: " + d1.getYear());
-
-		WishList wish = new WishList();
-
-		wish.setDate(d1.getDay(), d1.getMonth(), d1.getYear());
-		wish.setImdbId(imdbId);
-		wish.setUserId(objId);
-		wish.setName(name);
-		wish.setPoster(poster);
-		
-		CreateWishCommand userWish = new CreateWishCommand();
-		String imdb_Id = userWish.execute(wish);
-		System.out.println("User wish IMDB id ="+imdb_Id);
-		
-		if (imdb_Id == null) {
-			return Response.ok(new Viewable("/view/Error404.jsp", " Bad request")).header("Access-Control-Allow-Origin", "*")
-					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
-
-		} else {
-			return Response.ok(new Viewable("/view/AddWish.jsp", imdb_Id)).header("Access-Control-Allow-Origin", "*")
-					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
-		}
-
 	}
-	
-	
+
 
 	// ============================== EXTRA Services, Working on it
 	// ===========================
@@ -297,15 +283,5 @@ public class Sandbox {
 			return Response.status(400).entity(e.toString()).header("Access-Control-Allow-Origin", "*")
 					.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
 		}
-	}
-	
-	@GET
-	@Path("wishlist")
-	public Response getImdbSearch(){
-		
-		return Response.ok(new Viewable("/view/ImdbSearch.jsp")).header("Access-Control-Allow-Origin", "*")
-				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT").allow("OPTIONS").build();
-		
-		
 	}
 }
